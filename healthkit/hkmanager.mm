@@ -42,12 +42,14 @@ void HKManager::requestAuthorization() {
 
 void HKManager::requestHeartRate(int daysAgo) {
   setProgress(0.0);
+  m_heartRate.clear();
   NSDate *now = [NSDate date];
   NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
   NSDate *t0 = [NSDate dateWithTimeIntervalSince1970:0];
+  
   if (daysAgo > 0) {
-    uint64_t secondsAgo = daysAgo * 86400;
-    t0 = [now dateByAddingTimeInterval:-secondsAgo];
+      NSDate *sevenDaysAgo = [now dateByAddingTimeInterval:-daysAgo * 24 * 60 * 60];
+      t0 = sevenDaysAgo;
   }
 
   NSPredicate *predicate = [HKQuery predicateForSamplesWithStartDate:t0
