@@ -6,6 +6,7 @@
 #include <QNetworkReply>
 #include <QObject>
 #include <QString>
+#include <QVector>
 
 #include <functional>
 
@@ -28,12 +29,16 @@ class CogniteSDK : public QObject {
   QJsonDocument parseResponse(const QByteArray &response);
   void get(QString url, QMap<QString, QString> params,
            std::function<void(QNetworkReply *reply)> callback);
-
+  void post(QString url, const QByteArray &body,
+            std::function<void(QNetworkReply *reply)> callback);
   void getAssetsWithName(QString name,
                          std::function<void(QVector<Asset>, bool)> callback);
   void getAssets(std::function<void(QVector<Asset>, bool)> callback);
   void getTimeSeriesWithName(
       QString name, std::function<void(QVector<TimeSeries>, bool)> callback);
+  void createDataPointsInTimeSeries(QString name,
+                                    const QVector<DataPoint> &dataPoints,
+                                    std::function<void(bool)> callback);
   float progress() const;
  public slots:
   void setProgress(float progress);

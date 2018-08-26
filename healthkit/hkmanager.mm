@@ -44,9 +44,13 @@ void HKManager::requestHeartRate(int daysAgo) {
   setProgress(0.0);
   NSDate *now = [NSDate date];
   NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
-  NSDate *beginOfTime = [NSDate dateWithTimeIntervalSince1970:0];
+  NSDate *t0 = [NSDate dateWithTimeIntervalSince1970:0];
+  if (daysAgo > 0) {
+    uint64_t secondsAgo = daysAgo * 86400;
+    t0 = [now dateByAddingTimeInterval:-secondsAgo];
+  }
 
-  NSPredicate *predicate = [HKQuery predicateForSamplesWithStartDate:beginOfTime
+  NSPredicate *predicate = [HKQuery predicateForSamplesWithStartDate:t0
                                                              endDate:now
                                                              options:HKQueryOptionStrictStartDate];
   qDebug() << "Predicate ready. I am thread " << QThread::currentThread();
@@ -72,8 +76,9 @@ void HKManager::requestHeartRate(int daysAgo) {
               }
               HKUnit *unit = [[HKUnit countUnit] unitDividedByUnit:[HKUnit minuteUnit]];
               NSDate *date = sample.startDate;
-              uint64_t unixTimestamp = static_cast<uint64_t>(date.timeIntervalSince1970);
-              uint64_t value = static_cast<uint64_t>([sample.quantity doubleValueForUnit:unit]);
+              uint64_t unixTimestamp =
+                  static_cast<uint64_t>(date.timeIntervalSince1970) * 1000;  // CDP wants ms
+              double value = [sample.quantity doubleValueForUnit:unit];
 
               m_heartRate.push_back({unixTimestamp, value});
             }

@@ -23,4 +23,9 @@ struct TimeSeries {
   uint64_t id;
 };
 
+struct DataPoint {
+  uint64_t timestamp;
+  double value;
+};
+
 #endif  // TYPES_H

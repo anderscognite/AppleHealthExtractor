@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QPair>
 #include <QVector>
+#include "cognitesdk/v0.5/types.h"
 
 class HKManager : public QObject {
   Q_OBJECT
@@ -14,7 +15,7 @@ class HKManager : public QObject {
       float progress READ progress WRITE setProgress NOTIFY progressChanged)
  private:
   void *m_healthStore = nullptr;
-  QVector<QPair<uint64_t, uint64_t>> m_heartRate;
+  QVector<DataPoint> m_heartRate;
   QElapsedTimer m_timer;
   float m_progress = 0.0;
   QString m_status;
@@ -24,7 +25,7 @@ class HKManager : public QObject {
   void setStatusMessage(QString message, uint64_t count, uint64_t maxCount);
   void requestAuthorization();
   void requestHeartRate(int daysAgo);
-  QVector<QPair<uint64_t, uint64_t>> getHeartRate() { return m_heartRate; };
+  const QVector<DataPoint> &getHeartRate() { return m_heartRate; };
   float progress() const;
   QString status() const;
 

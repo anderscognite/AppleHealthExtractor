@@ -10,6 +10,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QUrlQuery>
+#include <QVariantMap>
 
 CogniteSDK::CogniteSDK(QObject *parent)
     : QObject(parent), m_manager(new QNetworkAccessManager(this)) {}
@@ -53,8 +54,23 @@ void CogniteSDK::get(QString url, QMap<QString, QString> params,
   // move the connect function into a executeRequest or something
   QNetworkReply *reply = m_manager->get(request);
   QObject::connect(reply, &QNetworkReply::finished, [reply, callback]() {
-    reply->deleteLater();
     callback(reply);
+    reply->deleteLater();
+  });
+}
+
+void CogniteSDK::post(QString url, const QByteArray &body,
+                      std::function<void(QNetworkReply *reply)> callback) {
+  auto url_ = QUrl(url);
+  auto request = createRequest(url_);
+
+  QByteArray postDataSize = QByteArray::number(body.size());
+  request.setHeader(QNetworkRequest::ContentLengthHeader, postDataSize);
+
+  QNetworkReply *reply = m_manager->post(request, body);
+  QObject::connect(reply, &QNetworkReply::finished, [reply, callback]() {
+    callback(reply);
+    reply->deleteLater();
   });
 }
 
@@ -119,6 +135,38 @@ void CogniteSDK::getTimeSeriesWithName(
       timeSeries.push_back(ts);
     }
     callback(timeSeries, false);
+  });
+}
+
+void CogniteSDK::createDataPointsInTimeSeries(
+    QString name, const QVector<DataPoint> &dataPointsIn,
+    std::function<void(bool)> callback) {
+  QString url = QString(Constants::baseUrl + m_version + "/projects/" +
+                        Constants::project + "/timeseries/data");
+
+  QVariantMap data;
+
+  QVariantList dataPoints;
+  for (const DataPoint &p : dataPointsIn) {
+    dataPoints.push_back(
+        QVariantMap({{"timestamp", p.timestamp}, {"value", p.value}}));
+  }
+
+  QVariantList items;
+
+  items.push_back(QVariantMap({{"name", name}, {"datapoints", dataPoints}}));
+  data["items"] = items;
+  QJsonDocument json = QJsonDocument::fromVariant(data);
+  QByteArray body = json.toJson();
+  //  qDebug() << "Got document: " << json.toJson();
+
+  post(url, body, [this, callback](QNetworkReply *reply) {
+    if (reply->error() != QNetworkReply::NoError) {
+      qDebug() << "Got error: " << reply->errorString();
+      callback(true);
+      return;
+    }
+    callback(false);
   });
 }
 
