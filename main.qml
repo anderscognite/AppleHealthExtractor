@@ -12,15 +12,6 @@ Window {
         onClicked: sdk.test()
     }
 
-    CogniteSDK {
-        id: sdk2
-    }
-    Button {
-        x: 50
-        text: "Request 2"
-        onClicked: sdk2.test()
-    }
-
     visible: true
     width: 640
     height: 480

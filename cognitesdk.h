@@ -14,6 +14,8 @@ class CogniteSDK : public QObject {
  private:
   void connect(std::function<void(QNetworkReply *reply)> callback);
   QNetworkAccessManager *m_manager;
+  QNetworkRequest createRequest(QUrl url);
+  QUrlQuery createQuery(QMap<QString, QString> params);
 
  public:
   bool m_debug = true;

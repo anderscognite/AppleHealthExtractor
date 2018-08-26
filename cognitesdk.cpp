@@ -45,23 +45,32 @@ QJsonDocument CogniteSDK::parseResponse(const QByteArray &response) {
   return document;
 }
 
-void CogniteSDK::get(QString url, QMap<QString, QString> params,
-                     std::function<void(QNetworkReply *reply)> callback) {
-  auto url_ = QUrl(url);
-  if (params.size() > 0) {
-    QUrlQuery query;
-    for (auto key : params.keys()) {
-      query.addQueryItem(key, params[key]);
-    }
-    url_.setQuery(query);
-  }
-  auto request = QNetworkRequest(url_);
+QNetworkRequest CogniteSDK::createRequest(QUrl url) {
+  auto request = QNetworkRequest(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader,
                     QVariant::fromValue(QString("application/json")));
 
   request.setRawHeader("Api-key", Constants::apiKey.toLocal8Bit());
-  QNetworkReply *reply = m_manager->get(request);
+  return request;
+}
 
+QUrlQuery CogniteSDK::createQuery(QMap<QString, QString> params) {
+  QUrlQuery query;
+  for (auto key : params.keys()) {
+    query.addQueryItem(key, params[key]);
+  }
+  return query;
+}
+
+void CogniteSDK::get(QString url, QMap<QString, QString> params,
+                     std::function<void(QNetworkReply *reply)> callback) {
+  auto url_ = QUrl(url);
+  url_.setQuery(createQuery(params));
+  auto request = createRequest(url_);
+
+  // TODO(anders.hafreager): This will be in GET, POST, DELETE etc, so
+  // move the connect function into a executeRequest or something
+  QNetworkReply *reply = m_manager->get(request);
   QObject::connect(reply, &QNetworkReply::finished, [reply, callback]() {
     reply->deleteLater();
     callback(reply);
