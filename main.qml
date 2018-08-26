@@ -7,10 +7,29 @@ Window {
     CogniteSDK {
         id: sdk
     }
-    Button {
-        text: "Request"
-        onClicked: sdk.test()
+    HKManager {
+        id: hkManager
     }
+    Column {
+        Row {
+            Button {
+                text: "Authorize"
+                onClicked: {
+                    hkManager.requestAuthorization()
+                }
+            }
+            Button {
+                text: "Sync heart rate"
+                onClicked: {
+                    hkManager.getHeartRate()
+                }
+            }
+        }
+    }
+//    Button {
+//        text: "Request"
+//        onClicked: sdk.test()
+//    }
 
     visible: true
     width: 640

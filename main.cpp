@@ -1,10 +1,12 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QtQml>
-#include "cognitesdk/cognitesdk.h"
+#include "cognitesdk/v0.5/cognitesdk.h"
+#include "healthkit/hkmanager.h"
 
 int main(int argc, char *argv[]) {
   qmlRegisterType<CogniteSDK>("Cognite", 1, 0, "CogniteSDK");
+  qmlRegisterType<HKManager>("Cognite", 1, 0, "HKManager");
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
   QGuiApplication app(argc, argv);

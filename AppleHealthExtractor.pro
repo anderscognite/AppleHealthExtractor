@@ -8,7 +8,6 @@ HEADER_OUTPUT = \
 "namespace Constants {"\
 "const QString baseUrl = \"https://api.cognitedata.com/api/\";"\
 "const QString project = \"andershaf\";"\
-"const QString version = \"0.5\";"\
 "const QString apiKey = \"$$(COGNITE_API_KEY)\";"\
 "}"\
 
@@ -27,8 +26,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    cognitesdk/cognitesdk.cpp \
-    cognitesdk/types.cpp
+    cognitesdk/v0.5/cognitesdk.cpp \
+    cognitesdk/v0.5/types.cpp \
+    healthkit/hkmanager.mm
 
 RESOURCES += qml.qrc
 
@@ -44,5 +44,13 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    cognitesdk/cognitesdk.h \
-    cognitesdk/types.h
+    cognitesdk/v0.5/cognitesdk.h \
+    cognitesdk/v0.5/types.h \
+    healthkit/hkmanager.h
+
+ios {
+    QMAKE_INFO_PLIST = info.plist
+}
+
+DISTFILES += \
+    info.plist

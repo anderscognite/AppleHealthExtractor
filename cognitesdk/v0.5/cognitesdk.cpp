@@ -24,14 +24,15 @@ void CogniteSDK::test() {
     }
   });
 
-  getAssets([&](QVector<Asset> assets, bool error) {
-    qDebug() << "Got error: " << error;
+  getTimeSeriesWithName("Heart Rate",
+                        [&](QVector<TimeSeries> timeSeries, bool error) {
+                          qDebug() << "Got error: " << error;
 
-    qDebug() << "Got assets actually: " << assets.size();
-    for (Asset asset : assets) {
-      qDebug() << "Asset: " << asset.name;
-    }
-  });
+                          qDebug() << "Got ts actually: " << timeSeries.size();
+                          for (TimeSeries ts : timeSeries) {
+                            qDebug() << "TS: " << ts.name;
+                          }
+                        });
 }
 
 QJsonDocument CogniteSDK::parseResponse(const QByteArray &response) {
@@ -79,7 +80,7 @@ void CogniteSDK::get(QString url, QMap<QString, QString> params,
 
 void CogniteSDK::getAssetsWithName(
     QString name, std::function<void(QVector<Asset>, bool)> callback) {
-  QString url = QString(Constants::baseUrl + Constants::version + "/projects/" +
+  QString url = QString(Constants::baseUrl + m_version + "/projects/" +
                         Constants::project + "/assets/search");
   get(url, {{"name", name}}, [this, callback](QNetworkReply *reply) {
     if (reply->error() != QNetworkReply::NoError) {
@@ -100,7 +101,7 @@ void CogniteSDK::getAssetsWithName(
 }
 
 void CogniteSDK::getAssets(std::function<void(QVector<Asset>, bool)> callback) {
-  QString url = QString(Constants::baseUrl + Constants::version + "/projects/" +
+  QString url = QString(Constants::baseUrl + m_version + "/projects/" +
                         Constants::project + "/assets");
   get(url, {}, [this, callback](QNetworkReply *reply) {
     if (reply->error() != QNetworkReply::NoError) {
@@ -117,5 +118,26 @@ void CogniteSDK::getAssets(std::function<void(QVector<Asset>, bool)> callback) {
       assets.push_back(asset);
     }
     callback(assets, false);
+  });
+}
+
+void CogniteSDK::getTimeSeriesWithName(
+    QString name, std::function<void(QVector<TimeSeries>, bool)> callback) {
+  QString url = QString(Constants::baseUrl + m_version + "/projects/" +
+                        Constants::project + "/timeseries/search");
+  get(url, {{"name", name}}, [this, callback](QNetworkReply *reply) {
+    if (reply->error() != QNetworkReply::NoError) {
+      qDebug() << "Got error: " << reply->errorString();
+      callback({}, true);
+      return;
+    }
+    QByteArray response = reply->readAll();
+    auto document = parseResponse(response);
+    QVector<TimeSeries> timeSeries;
+    for (auto j_timeSeries : document["data"]["items"].toArray()) {
+      TimeSeries ts = TimeSeries::fromJSON(j_timeSeries.toObject());
+      timeSeries.push_back(ts);
+    }
+    callback(timeSeries, false);
   });
 }
