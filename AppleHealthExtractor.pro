@@ -27,8 +27,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    cognitesdk.cpp \
-    types.cpp
+    cognitesdk/cognitesdk.cpp \
+    cognitesdk/types.cpp
 
 RESOURCES += qml.qrc
 
@@ -44,5 +44,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    cognitesdk.h \
-    types.h
+    cognitesdk/cognitesdk.h \
+    cognitesdk/types.h

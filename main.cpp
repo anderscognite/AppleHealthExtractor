@@ -1,7 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QtQml>
-#include "cognitesdk.h"
+#include "cognitesdk/cognitesdk.h"
 
 int main(int argc, char *argv[]) {
   qmlRegisterType<CogniteSDK>("Cognite", 1, 0, "CogniteSDK");
