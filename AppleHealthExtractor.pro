@@ -28,7 +28,8 @@ SOURCES += \
         main.cpp \
     cognitesdk/v0.5/cognitesdk.cpp \
     cognitesdk/v0.5/types.cpp \
-    healthkit/hkmanager.mm
+    healthkit/hkmanager.mm \
+    datahandler.cpp
 
 RESOURCES += qml.qrc
 
@@ -46,7 +47,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     cognitesdk/v0.5/cognitesdk.h \
     cognitesdk/v0.5/types.h \
-    healthkit/hkmanager.h
+    healthkit/hkmanager.h \
+    datahandler.h
 
 ios {
     QMAKE_INFO_PLIST = info.plist

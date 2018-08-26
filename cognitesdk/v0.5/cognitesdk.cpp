@@ -14,29 +14,9 @@
 CogniteSDK::CogniteSDK(QObject *parent)
     : QObject(parent), m_manager(new QNetworkAccessManager(this)) {}
 
-void CogniteSDK::test() {
-  getAssetsWithName("Heart Rate", [&](QVector<Asset> assets, bool error) {
-    qDebug() << "Got error: " << error;
-
-    qDebug() << "Got assets actually: " << assets.size();
-    for (Asset asset : assets) {
-      qDebug() << "Asset: " << asset.name;
-    }
-  });
-
-  getTimeSeriesWithName("Heart Rate",
-                        [&](QVector<TimeSeries> timeSeries, bool error) {
-                          qDebug() << "Got error: " << error;
-
-                          qDebug() << "Got ts actually: " << timeSeries.size();
-                          for (TimeSeries ts : timeSeries) {
-                            qDebug() << "TS: " << ts.name;
-                          }
-                        });
-}
+CogniteSDK::~CogniteSDK() {}
 
 QJsonDocument CogniteSDK::parseResponse(const QByteArray &response) {
-  qDebug() << "Got response to parse: " << response;
   QJsonParseError error;
   QJsonDocument document = QJsonDocument::fromJson(response, &error);
   if (error.error != QJsonParseError::NoError) {
@@ -140,4 +120,14 @@ void CogniteSDK::getTimeSeriesWithName(
     }
     callback(timeSeries, false);
   });
+}
+
+float CogniteSDK::progress() const { return m_progress; }
+
+void CogniteSDK::setProgress(float progress) {
+  qWarning("Floating point comparison needs context sanity check");
+  if (qFuzzyCompare(m_progress, progress)) return;
+
+  m_progress = progress;
+  emit progressChanged(m_progress);
 }

@@ -1,6 +1,7 @@
 #include "hkmanager.h"
 #import <HealthKit/HealthKit.h>
 #include <QDebug>
+#include <QThread>
 
 HKManager::HKManager() { m_healthStore = [[HKHealthStore alloc] init]; }
 
@@ -19,7 +20,8 @@ void HKManager::requestAuthorization() {
                            quantityTypeForIdentifier:HKQuantityTypeIdentifierActiveEnergyBurned]];
   [readTypes
       addObject:[HKObjectType quantityTypeForIdentifier:HKQuantityTypeIdentifierFlightsClimbed]];
-//  [readTypes addObject:[HKObjectType quantityTypeForIdentifier:HKCategoryTypeIdentifierAppleStandHour]];
+  //  [readTypes addObject:[HKObjectType
+  //  quantityTypeForIdentifier:HKCategoryTypeIdentifierAppleStandHour]];
   [readTypes
       addObject:[HKObjectType quantityTypeForIdentifier:HKQuantityTypeIdentifierAppleExerciseTime]];
 
@@ -38,7 +40,8 @@ void HKManager::requestAuthorization() {
                                        }];
 }
 
-void HKManager::getHeartRate() {
+void HKManager::requestHeartRate(int daysAgo) {
+  setProgress(0.0);
   NSDate *now = [NSDate date];
   NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
   NSDate *beginOfTime = [NSDate dateWithTimeIntervalSince1970:0];
@@ -46,7 +49,7 @@ void HKManager::getHeartRate() {
   NSPredicate *predicate = [HKQuery predicateForSamplesWithStartDate:beginOfTime
                                                              endDate:now
                                                              options:HKQueryOptionStrictStartDate];
-  qDebug() << "Predicate ready";
+  qDebug() << "Predicate ready. I am thread " << QThread::currentThread();
   HKSampleQuery *sampleQuery = [[HKSampleQuery alloc]
       initWithSampleType:[HKObjectType quantityTypeForIdentifier:HKQuantityTypeIdentifierHeartRate]
                predicate:predicate
@@ -57,25 +60,52 @@ void HKManager::getHeartRate() {
                            NSError *_Nullable error) {
             qDebug() << "Query finished after " << m_timer.restart() / 1000.
                      << " seconds, looping through " << results.count << " things";
+            setStatus("Converting data...");
 
+            uint64_t numSamples = results.count;
+            uint64_t count = 0;
             for (HKQuantitySample *sample in results) {
+              if (++count % 100 == 0) {
+                double percentage = double(count) / numSamples;
+                setProgress(percentage);
+                setStatusMessage("Converting data...", count, numSamples);
+              }
               HKUnit *unit = [[HKUnit countUnit] unitDividedByUnit:[HKUnit minuteUnit]];
               NSDate *date = sample.startDate;
-              float unixTimestamp = date.timeIntervalSince1970;
-              float value = [sample.quantity doubleValueForUnit:unit];
-              QPair<QDateTime, float> point(QDateTime::fromMSecsSinceEpoch(1000 * unixTimestamp),
-                                            value);
-              m_heartRate.push_back(point);
-              qDebug() << "Heart rate: " << value;
+              uint64_t unixTimestamp = static_cast<uint64_t>(date.timeIntervalSince1970);
+              uint64_t value = static_cast<uint64_t>([sample.quantity doubleValueForUnit:unit]);
+
+              m_heartRate.push_back({unixTimestamp, value});
             }
 
             qDebug() << "Done after " << m_timer.elapsed() / 1000. << " seconds.";
-            //        for(auto p : m_heartRate) {
-            //            qDebug() << p;
-            //        }
+            setProgress(0.0);
+            setStatus("");
+            emit heartRateReady();
           }];
 
-  qDebug() << "Executing query";
   m_timer.start();
+  setStatus("Executing query...");
   [m_healthStore executeQuery:sampleQuery];
+}
+
+void HKManager::setStatusMessage(QString message, uint64_t count, uint64_t maxCount) {
+  message = QString("%1 (%2/%3)").arg(message).arg(count).arg(maxCount);
+  setStatus(message);
+}
+
+float HKManager::progress() const { return m_progress; }
+
+void HKManager::setProgress(float progress) {
+  m_progress = progress;
+  emit progressChanged(m_progress);
+}
+
+QString HKManager::status() const { return m_status; }
+
+void HKManager::setStatus(QString status) {
+  if (m_status == status) return;
+
+  m_status = status;
+  emit statusChanged(m_status);
 }
