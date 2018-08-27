@@ -25,6 +25,7 @@ class DataHandler : public QObject {
   CogniteSDK* sdk() const;
   HKManager* hkManager() const;
   Q_INVOKABLE void syncHeartRate(int daysAgo);
+  Q_INVOKABLE void syncSteps(int daysAgo);
   bool busy() const;
   QString status() const;
 
@@ -37,9 +38,10 @@ class DataHandler : public QObject {
  public slots:
   void setSdk(CogniteSDK* sdk);
   void setHkManager(HKManager* hkManager);
-  void uploadHeartRate();
   void setBusy(bool busy);
   void setStatus(QString status);
+  void uploadHeartRate();
+  void uploadSteps();
 };
 
 #endif  // DATAHANDLER_H

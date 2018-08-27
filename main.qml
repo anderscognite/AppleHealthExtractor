@@ -26,6 +26,41 @@ Window {
             }
         }
         Row {
+            Label {
+                text: "Period: "
+            }
+
+            Slider {
+                id: slider
+                property string buttonText: "Last 7 days"
+                property int daysAgo: 7
+                from: 1
+                to:5
+                stepSize: 1
+                value: 2
+
+                onValueChanged: {
+                    if (value == 1) {
+                        buttonText = "Last 24 hours"
+                        daysAgo = 1
+                    } else if (value == 2) {
+                        buttonText = "Last 7 days"
+                        daysAgo = 7
+                    } else if (value == 3) {
+                        buttonText = "Last 31 days"
+                        daysAgo = 31
+                    } else if (value == 4) {
+                        buttonText = "Last 6 months"
+                        daysAgo = 183
+                    } else if (value == 5) {
+                        buttonText = "Last year"
+                        daysAgo = 365
+                    }
+                }
+            }
+        }
+
+        Row {
             spacing: 5
             Button {
                 text: "Sync heart rate"
@@ -35,10 +70,27 @@ Window {
                 }
             }
             Button {
-                text: "Last 7 days"
+                text: slider.buttonText
                 enabled: !dataHandler.busy
                 onClicked: {
-                    dataHandler.syncHeartRate(7)
+                    dataHandler.syncHeartRate(slider.daysAgo)
+                }
+            }
+        }
+        Row {
+            spacing: 5
+            Button {
+                text: "Sync steps"
+                enabled: !dataHandler.busy
+                onClicked: {
+                    dataHandler.syncSteps(0)
+                }
+            }
+            Button {
+                text: slider.buttonText
+                enabled: !dataHandler.busy
+                onClicked: {
+                    dataHandler.syncSteps(slider.daysAgo)
                 }
             }
         }

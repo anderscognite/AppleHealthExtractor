@@ -16,6 +16,7 @@ class HKManager : public QObject {
  private:
   void *m_healthStore = nullptr;
   QVector<DataPoint> m_heartRate;
+  QVector<DataPoint> m_steps;
   QElapsedTimer m_timer;
   float m_progress = 0.0;
   QString m_status;
@@ -25,9 +26,12 @@ class HKManager : public QObject {
   void setStatusMessage(QString message, uint64_t count, uint64_t maxCount);
   void requestAuthorization();
   void requestHeartRate(int daysAgo);
+  void requestSteps(int daysAgo);
   const QVector<DataPoint> &getHeartRate() { return m_heartRate; };
+  const QVector<DataPoint> &getSteps() { return m_steps; };
   float progress() const;
   QString status() const;
+  void convertData(void *data, void *unit, QVector<DataPoint> &array);
 
  public slots:
   void setProgress(float progress);
@@ -35,6 +39,7 @@ class HKManager : public QObject {
 
  signals:
   void heartRateReady();
+  void stepsReady();
   void progressChanged(float progress);
   void statusChanged(QString status);
 };
