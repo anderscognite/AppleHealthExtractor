@@ -40,20 +40,17 @@ void HKManager::requestAuthorization() {
                                        }];
 }
 
-void HKManager::requestHeartRate(int daysAgo) {
+void HKManager::requestHeartRate(bool allData, int daysAgo) {
   setProgress(0.0);
   m_heartRate.clear();
-  NSDate *now = [NSDate date];
-  NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
   NSDate *t0 = [NSDate dateWithTimeIntervalSince1970:0];
 
   if (daysAgo > 0) {
-    NSDate *sevenDaysAgo = [now dateByAddingTimeInterval:-daysAgo * 24 * 60 * 60];
-    t0 = sevenDaysAgo;
+    t0 = [[NSDate date] dateByAddingTimeInterval:-daysAgo * 24 * 60 * 60];
   }
 
   NSPredicate *predicate = [HKQuery predicateForSamplesWithStartDate:t0
-                                                             endDate:now
+                                                             endDate:[NSDate date]
                                                              options:HKQueryOptionStrictStartDate];
   HKSampleQuery *sampleQuery = [[HKSampleQuery alloc]
       initWithSampleType:[HKObjectType quantityTypeForIdentifier:HKQuantityTypeIdentifierHeartRate]
@@ -73,20 +70,18 @@ void HKManager::requestHeartRate(int daysAgo) {
   [m_healthStore executeQuery:sampleQuery];
 }
 
-void HKManager::requestSteps(int daysAgo) {
+void HKManager::requestSteps(bool allData, int daysAgo) {
   setProgress(0.0);
   m_steps.clear();
-  NSDate *now = [NSDate date];
-  NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
   NSDate *t0 = [NSDate dateWithTimeIntervalSince1970:0];
 
   if (daysAgo > 0) {
-    NSDate *sevenDaysAgo = [now dateByAddingTimeInterval:-daysAgo * 24 * 60 * 60];
-    t0 = sevenDaysAgo;
+    t0 = [[NSDate date] dateByAddingTimeInterval:-daysAgo * 24 * 60 * 60];
+    NSLog(@"Will do days ago: %@", t0);
   }
 
   NSPredicate *predicate = [HKQuery predicateForSamplesWithStartDate:t0
-                                                             endDate:now
+                                                             endDate:[NSDate date]
                                                              options:HKQueryOptionStrictStartDate];
   HKSampleQuery *sampleQuery = [[HKSampleQuery alloc]
       initWithSampleType:[HKObjectType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount]

@@ -7,14 +7,14 @@ CogniteSDK *DataHandler::sdk() const { return m_sdk; }
 
 HKManager *DataHandler::hkManager() const { return m_hkManager; }
 
-void DataHandler::syncHeartRate(int daysAgo) {
+void DataHandler::syncHeartRate(bool allData, int daysAgo) {
   setBusy(true);
-  m_hkManager->requestHeartRate(daysAgo);
+  m_hkManager->requestHeartRate(allData, daysAgo);
 }
 
-void DataHandler::syncSteps(int daysAgo) {
+void DataHandler::syncSteps(bool allData, int daysAgo) {
   setBusy(true);
-  m_hkManager->requestSteps(daysAgo);
+  m_hkManager->requestSteps(allData, daysAgo);
 }
 
 bool DataHandler::busy() const { return m_busy; }

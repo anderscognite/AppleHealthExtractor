@@ -25,8 +25,8 @@ class HKManager : public QObject {
   HKManager();
   void setStatusMessage(QString message, uint64_t count, uint64_t maxCount);
   void requestAuthorization();
-  void requestHeartRate(int daysAgo);
-  void requestSteps(int daysAgo);
+  void requestHeartRate(bool allData, int daysAgo);
+  void requestSteps(bool allData, int daysAgo);
   const QVector<DataPoint> &getHeartRate() { return m_heartRate; };
   const QVector<DataPoint> &getSteps() { return m_steps; };
   float progress() const;

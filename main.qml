@@ -66,14 +66,14 @@ Window {
                 text: "Sync heart rate"
                 enabled: !dataHandler.busy
                 onClicked: {
-                    dataHandler.syncHeartRate(0)
+                    dataHandler.syncHeartRate(true, 0)
                 }
             }
             Button {
                 text: slider.buttonText
                 enabled: !dataHandler.busy
                 onClicked: {
-                    dataHandler.syncHeartRate(slider.daysAgo)
+                    dataHandler.syncHeartRate(false, slider.daysAgo)
                 }
             }
         }
@@ -83,14 +83,14 @@ Window {
                 text: "Sync steps"
                 enabled: !dataHandler.busy
                 onClicked: {
-                    dataHandler.syncSteps(0)
+                    dataHandler.syncSteps(true, 0)
                 }
             }
             Button {
                 text: slider.buttonText
                 enabled: !dataHandler.busy
                 onClicked: {
-                    dataHandler.syncSteps(slider.daysAgo)
+                    dataHandler.syncSteps(false, slider.daysAgo)
                 }
             }
         }
@@ -99,9 +99,6 @@ Window {
             text: {
                 if (hkManager.status !== "") {
                     return hkManager.status;
-                }
-                if (sdk.status !== "") {
-                    return sdk.status;
                 }
                 if (dataHandler.status !== "") {
                     return dataHandler.status;

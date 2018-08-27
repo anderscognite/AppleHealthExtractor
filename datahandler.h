@@ -24,8 +24,8 @@ class DataHandler : public QObject {
   explicit DataHandler(QObject* parent = nullptr);
   CogniteSDK* sdk() const;
   HKManager* hkManager() const;
-  Q_INVOKABLE void syncHeartRate(int daysAgo);
-  Q_INVOKABLE void syncSteps(int daysAgo);
+  Q_INVOKABLE void syncHeartRate(bool allData, int daysAgo);
+  Q_INVOKABLE void syncSteps(bool allData, int daysAgo);
   bool busy() const;
   QString status() const;
 
