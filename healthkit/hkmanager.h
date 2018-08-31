@@ -5,8 +5,12 @@
 #include <QElapsedTimer>
 #include <QObject>
 #include <QPair>
+#include <QQmlEngine>
 #include <QVector>
+
 #include "cognitesdk/v0.5/types.h"
+
+#include <functional>
 
 class HKManager : public QObject {
   Q_OBJECT
@@ -15,31 +19,42 @@ class HKManager : public QObject {
       float progress READ progress WRITE setProgress NOTIFY progressChanged)
  private:
   void *m_healthStore = nullptr;
-  QVector<DataPoint> m_heartRate;
-  QVector<DataPoint> m_steps;
+  QVector<DataPoint> m_data;
   QElapsedTimer m_timer;
   float m_progress = 0.0;
   QString m_status;
 
  public:
+  enum DataType {
+    HeartRate = 0,
+    StepCount = 1,
+    DistanceWalkingRunning = 2,
+    DistanceCycling = 3,
+    BasalEnergyBurned = 4,
+    ActiveEnergyBurned = 5,
+    FlightsClimbed = 6,
+    AppleExerciseTime = 7
+  };
+  Q_ENUMS(DataType)
+
+  enum EnStyle { STYLE_RADIAL, STYLE_ENVELOPE, STYLE_FILLED };
+  Q_ENUMS(EnStyle)
+
   HKManager();
   void setStatusMessage(QString message, uint64_t count, uint64_t maxCount);
   void requestAuthorization();
-  void requestHeartRate(bool allData, int daysAgo);
-  void requestSteps(bool allData, int daysAgo);
-  const QVector<DataPoint> &getHeartRate() { return m_heartRate; };
-  const QVector<DataPoint> &getSteps() { return m_steps; };
+  void requestData(bool allData, int daysAgo, DataType dataType);
+  void requestData2(bool allData, int daysAgo, DataType dataType);
+  const QVector<DataPoint> &getData() { return m_data; };
   float progress() const;
   QString status() const;
   void convertData(void *data, void *unit, QVector<DataPoint> &array);
-
  public slots:
   void setProgress(float progress);
   void setStatus(QString status);
 
  signals:
-  void heartRateReady();
-  void stepsReady();
+  void dataReady();
   void progressChanged(float progress);
   void statusChanged(QString status);
 };

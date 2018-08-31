@@ -21,6 +21,7 @@ class CogniteSDK : public QObject {
   QNetworkRequest createRequest(QUrl url);
   QUrlQuery createQuery(QMap<QString, QString> params);
   float m_progress = 0.0;
+  int m_count = 0;
 
  public:
   bool m_debug = true;

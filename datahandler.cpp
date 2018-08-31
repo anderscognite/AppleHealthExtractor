@@ -1,20 +1,38 @@
 #include "datahandler.h"
-#include <QDebug>
+#include "healthkit/hkmanager.h"
 
-DataHandler::DataHandler(QObject *parent) : QObject(parent) {}
+#include <QDebug>
+#include <QThread>
+
+QMap<HKManager::DataType, QString> nameMap;
+QMap<QString, HKManager::DataType> inverseNameMap;
+
+DataHandler::DataHandler(QObject *parent) : QObject(parent) {
+  nameMap.insert(HKManager::HeartRate, "Heart Rate");
+  nameMap.insert(HKManager::StepCount, "Steps");
+  nameMap.insert(HKManager::DistanceWalkingRunning,
+                 "Walking and running distance");
+  nameMap.insert(HKManager::DistanceCycling, "Cycling distance");
+  nameMap.insert(HKManager::BasalEnergyBurned, "Resting energy");
+  nameMap.insert(HKManager::ActiveEnergyBurned, "Active energy");
+  nameMap.insert(HKManager::FlightsClimbed, "Flights climbed");
+  nameMap.insert(HKManager::AppleExerciseTime, "Exercise");
+
+  for (auto key : nameMap.keys()) {
+    inverseNameMap[nameMap[key]] = key;
+  }
+}
 
 CogniteSDK *DataHandler::sdk() const { return m_sdk; }
 
 HKManager *DataHandler::hkManager() const { return m_hkManager; }
 
-void DataHandler::syncHeartRate(bool allData, int daysAgo) {
-  setBusy(true);
-  m_hkManager->requestHeartRate(allData, daysAgo);
-}
-
-void DataHandler::syncSteps(bool allData, int daysAgo) {
-  setBusy(true);
-  m_hkManager->requestSteps(allData, daysAgo);
+void DataHandler::sync(bool allData, int daysAgo, QString dataType) {
+  m_currentDataType = inverseNameMap[dataType];
+  qDebug() << "Will start syncing with data type " << dataType << " which is "
+           << m_currentDataType << " in the list.";
+  m_hkManager->requestData(allData, daysAgo, m_currentDataType);
+  //  m_hkManager->requestData2(allData, daysAgo, m_currentDataType);
 }
 
 bool DataHandler::busy() const { return m_busy; }
@@ -32,13 +50,10 @@ void DataHandler::setHkManager(HKManager *hkManager) {
   if (m_hkManager == hkManager) return;
 
   m_hkManager = hkManager;
-  emit hkManagerChanged(m_hkManager);
   if (m_hkManager) {
-    QObject::connect(m_hkManager, &HKManager::heartRateReady, this,
-                     &DataHandler::uploadHeartRate);
-    QObject::connect(m_hkManager, &HKManager::stepsReady, this,
-                     &DataHandler::uploadSteps);
+    connect(m_hkManager, &HKManager::dataReady, this, &DataHandler::uploadData);
   }
+  emit hkManagerChanged(m_hkManager);
 }
 
 void DataHandler::setBusy(bool busy) {
@@ -55,59 +70,37 @@ void DataHandler::setStatus(QString status) {
   emit statusChanged(m_status);
 }
 
-void DataHandler::uploadSteps() {
-  setStatus("Uploading data to CDP...");
-
-  uint64_t chunkSize = 25000;
-  const auto &steps = m_hkManager->getSteps();
-  uint64_t numChunks = steps.size() / chunkSize;
-  numChunks = std::max(static_cast<uint64_t>(1),
-                       numChunks);  // At least one chunk
-
-  for (uint64_t i = 0; i < numChunks; i++) {
-    uint64_t start = i * chunkSize;
-    uint64_t stop = (i + 1) * chunkSize;
-    stop = std::min(stop, uint64_t(steps.size()));  // cap to size of data
-    QVector<DataPoint> points;
-    points.reserve(stop - start);
-    for (uint64_t j = start; j < stop; j++) {
-      points.push_back(steps[j]);
-    }
-
-    m_sdk->createDataPointsInTimeSeries("Steps", points, [this](bool error) {
-      qDebug() << "Created data points with error: " << error;
-      if (error) {
-        setStatus("Error uploading");
-      } else {
-        setStatus("Done");
-      }
-      setBusy(false);
-    });
-  }
+void DataHandler::printData() {
+  const auto &data = m_hkManager->getData();
+  qDebug() << "Found " << data.size() << " things. Looping: ";
+  //  for (const auto point : data) {
+  //    qDebug() << point.timestamp << ": " << point.value;
+  //  }
 }
 
-void DataHandler::uploadHeartRate() {
+void DataHandler::uploadData() {
+  qDebug() << "Will upload";
   setStatus("Uploading data to CDP...");
 
-  uint64_t chunkSize = 25000;
-  const auto &heartRateData = m_hkManager->getHeartRate();
-  uint64_t numChunks = heartRateData.size() / chunkSize;
-  numChunks = std::max(static_cast<uint64_t>(1),
-                       numChunks);  // At least one chunk
+  uint64_t chunkSize = 100000;
+  const auto &data = m_hkManager->getData();
+  uint64_t numChunks = data.size() / chunkSize + 1;
 
+  qDebug() << "Looping through...";
   for (uint64_t i = 0; i < numChunks; i++) {
     uint64_t start = i * chunkSize;
     uint64_t stop = (i + 1) * chunkSize;
-    stop =
-        std::min(stop, uint64_t(heartRateData.size()));  // cap to size of data
+    qDebug() << "Chunk from" << start << " to " << stop;
+    stop = std::min(stop, uint64_t(data.size()));  // cap to size of data
     QVector<DataPoint> points;
     points.reserve(stop - start);
     for (uint64_t j = start; j < stop; j++) {
-      points.push_back(heartRateData[j]);
+      points.push_back(data[j]);
     }
 
+    qDebug() << "Start thing";
     m_sdk->createDataPointsInTimeSeries(
-        "Heart Rate", points, [this](bool error) {
+        nameMap[m_currentDataType], points, [this](bool error) {
           qDebug() << "Created data points with error: " << error;
           if (error) {
             setStatus("Error uploading");

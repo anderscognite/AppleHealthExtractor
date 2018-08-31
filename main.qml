@@ -2,13 +2,26 @@ import QtQuick 2.11
 import QtQuick.Window 2.11
 import Cognite 1.0
 import QtQuick.Controls 2.2
-
+/*
+    HeartRate = 0,
+    StepCount = 1,
+    DistanceWalkingRunning = 2,
+    DistanceCycling = 3,
+    BasalEnergyBurned = 4,
+    ActiveEnergyBurned = 5,
+    FlightsClimbed = 6,
+    AppleExerciseTime = 7
+*/
 Window {
     CogniteSDK {
         id: sdk
     }
     HKManager {
         id: hkManager
+        Component.onCompleted: {
+            console.log('HKManager.HeartRate: ', HKManager.HeartRate)
+            console.log('HKManager.StepCount: ', HKManager.StepCount)
+        }
     }
     DataHandler {
         id: dataHandler
@@ -60,39 +73,44 @@ Window {
             }
         }
 
-        Row {
-            spacing: 5
-            Button {
-                text: "Sync heart rate"
-                enabled: !dataHandler.busy
-                onClicked: {
-                    dataHandler.syncHeartRate(true, 0)
-                }
-            }
-            Button {
-                text: slider.buttonText
-                enabled: !dataHandler.busy
-                onClicked: {
-                    dataHandler.syncHeartRate(false, slider.daysAgo)
-                }
-            }
+        HKButtons {
+            buttonText: "Sync heart rate"
+            dataType: "Heart rate"
         }
-        Row {
-            spacing: 5
-            Button {
-                text: "Sync steps"
-                enabled: !dataHandler.busy
-                onClicked: {
-                    dataHandler.syncSteps(true, 0)
-                }
-            }
-            Button {
-                text: slider.buttonText
-                enabled: !dataHandler.busy
-                onClicked: {
-                    dataHandler.syncSteps(false, slider.daysAgo)
-                }
-            }
+
+        HKButtons {
+            buttonText: "Sync steps"
+            dataType: "Steps"
+        }
+
+        HKButtons {
+            buttonText: "Sync walking distance"
+            dataType: "Walking and running distance"
+        }
+
+        HKButtons {
+            buttonText: "Sync cycling distance"
+            dataType: "Cycling distance"
+        }
+
+        HKButtons {
+            buttonText: "Sync resting energy"
+            dataType: "Resting energy"
+        }
+
+        HKButtons {
+            buttonText: "Sync active energy"
+            dataType: "Active energy"
+        }
+
+        HKButtons {
+            buttonText: "Sync flights"
+            dataType: "Flights climbed"
+        }
+
+        HKButtons {
+            buttonText: "Sync exercise time"
+            dataType: "Exercise"
         }
 
         Label {

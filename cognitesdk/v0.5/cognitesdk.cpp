@@ -3,12 +3,16 @@
 
 #include <QColor>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QIODevice>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QStandardPaths>
 #include <QUrlQuery>
 #include <QVariantMap>
 
@@ -63,6 +67,29 @@ void CogniteSDK::post(QString url, const QByteArray &body,
                       std::function<void(QNetworkReply *reply)> callback) {
   auto url_ = QUrl(url);
   auto request = createRequest(url_);
+  QString dataDirPath =
+      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+  dataDirPath =
+      QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
+  if (!QDir(dataDirPath).exists()) {
+    if (!QDir().mkdir(dataDirPath)) {
+      qDebug()
+          << "Fatal error: Insufficient premissions to create directory -> "
+          << dataDirPath;
+      return;
+    }
+  }
+  QString fileName = dataDirPath + QString("/request%1.txt").arg(m_count++);
+  // QFile f(dataDirPath + "/request.txt");
+    QFile f(fileName);
+
+  if (!f.open(QIODevice::WriteOnly)) {
+    qDebug() << "Could not open file: " << f.fileName();
+  } else {
+    qDebug() << "Wrote body to file: " << f.fileName();
+    f.write(body);
+  }
+  f.close();
 
   QByteArray postDataSize = QByteArray::number(body.size());
   request.setHeader(QNetworkRequest::ContentLengthHeader, postDataSize);

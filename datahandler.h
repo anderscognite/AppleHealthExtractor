@@ -17,15 +17,16 @@ class DataHandler : public QObject {
  private:
   CogniteSDK* m_sdk;
   HKManager* m_hkManager;
+  HKManager::DataType m_currentDataType;
   bool m_busy = false;
   QString m_status;
 
- public:
-  explicit DataHandler(QObject* parent = nullptr);
   CogniteSDK* sdk() const;
   HKManager* hkManager() const;
-  Q_INVOKABLE void syncHeartRate(bool allData, int daysAgo);
-  Q_INVOKABLE void syncSteps(bool allData, int daysAgo);
+
+ public:
+  explicit DataHandler(QObject* parent = nullptr);
+  Q_INVOKABLE void sync(bool allData, int daysAgo, QString dataType);
   bool busy() const;
   QString status() const;
 
@@ -36,12 +37,12 @@ class DataHandler : public QObject {
   void statusChanged(QString status);
 
  public slots:
+  void uploadData();
   void setSdk(CogniteSDK* sdk);
   void setHkManager(HKManager* hkManager);
   void setBusy(bool busy);
   void setStatus(QString status);
-  void uploadHeartRate();
-  void uploadSteps();
+  void printData();
 };
 
 #endif  // DATAHANDLER_H
