@@ -2,26 +2,29 @@ import QtQuick 2.11
 import QtQuick.Window 2.11
 import Cognite 1.0
 import QtQuick.Controls 2.2
-/*
-    HeartRate = 0,
-    StepCount = 1,
-    DistanceWalkingRunning = 2,
-    DistanceCycling = 3,
-    BasalEnergyBurned = 4,
-    ActiveEnergyBurned = 5,
-    FlightsClimbed = 6,
-    AppleExerciseTime = 7
-*/
+//import Qt.labs.settings 1.0
+
 Window {
+    id: root
+    property bool authorized: false
+
+    function createSyncList() {
+        var items = []
+        if (heartRate.checked) items.push("Heart Rate");
+        if (steps.checked) items.push("Steps");
+        if (walkingDistance.checked) items.push("Walking and running distance");
+        if (cyclingDistance.checked) items.push("Cycling distance");
+        if (restingEnergy.checked) items.push("Resting energy");
+        if (activeEnergy.checked) items.push("Active energy");
+        if (flightsClimbed.checked) items.push("Flights Climbed");
+        return items;
+    }
+
     CogniteSDK {
         id: sdk
     }
     HKManager {
         id: hkManager
-        Component.onCompleted: {
-            console.log('HKManager.HeartRate: ', HKManager.HeartRate)
-            console.log('HKManager.StepCount: ', HKManager.StepCount)
-        }
     }
     DataHandler {
         id: dataHandler
@@ -36,8 +39,58 @@ Window {
             enabled: !dataHandler.busy
             onClicked: {
                 hkManager.requestAuthorization()
+                authorized = true
             }
         }
+
+        CheckBox {
+            id: heartRate
+            text: "Heart Rate"
+            checked: true;
+            enabled: !dataHandler.busy
+        }
+        CheckBox {
+            id: steps
+            text: "Steps"
+            checked: true;
+            enabled: !dataHandler.busy
+        }
+
+        CheckBox {
+            id: walkingDistance
+            text: "Walking/running distance"
+            checked: true;
+            enabled: !dataHandler.busy
+        }
+        CheckBox {
+            id: cyclingDistance
+            text: "Cycling distance"
+            checked: true;
+            enabled: !dataHandler.busy
+        }
+
+        CheckBox {
+            id: restingEnergy
+            text: "Resting energy"
+            checked: true;
+            enabled: !dataHandler.busy
+        }
+
+        CheckBox {
+            id: activeEnergy
+            text: "Active energy"
+            checked: true;
+            enabled: !dataHandler.busy
+        }
+
+
+        CheckBox {
+            id: flightsClimbed
+            text: "Flights climbed"
+            checked: true;
+            enabled: !dataHandler.busy
+        }
+
         Row {
             Label {
                 text: "Period: "
@@ -51,6 +104,7 @@ Window {
                 to:5
                 stepSize: 1
                 value: 2
+                enabled: !dataHandler.busy
 
                 onValueChanged: {
                     if (value == 1) {
@@ -73,44 +127,22 @@ Window {
             }
         }
 
-        HKButtons {
-            buttonText: "Sync heart rate"
-            dataType: "Heart rate"
-        }
+        Row {
+            Button {
+                text: "Sync"
+                enabled: !dataHandler.busy
+                onClicked: {
+                    dataHandler.sync(true, 0, createSyncList())
+                }
+            }
 
-        HKButtons {
-            buttonText: "Sync steps"
-            dataType: "Steps"
-        }
-
-        HKButtons {
-            buttonText: "Sync walking distance"
-            dataType: "Walking and running distance"
-        }
-
-        HKButtons {
-            buttonText: "Sync cycling distance"
-            dataType: "Cycling distance"
-        }
-
-        HKButtons {
-            buttonText: "Sync resting energy"
-            dataType: "Resting energy"
-        }
-
-        HKButtons {
-            buttonText: "Sync active energy"
-            dataType: "Active energy"
-        }
-
-        HKButtons {
-            buttonText: "Sync flights"
-            dataType: "Flights climbed"
-        }
-
-        HKButtons {
-            buttonText: "Sync exercise time"
-            dataType: "Exercise"
+            Button {
+                text: slider.buttonText
+                enabled: !dataHandler.busy
+                onClicked: {
+                    dataHandler.sync(false, slider.daysAgo, createSyncList());
+                }
+            }
         }
 
         Label {
@@ -126,6 +158,10 @@ Window {
             visible: dataHandler.busy
         }
 
+        ProgressBar {
+            value: dataHandler.syncProgress
+            visible: dataHandler.busy
+        }
         ProgressBar {
             value: Math.max(hkManager.progress, sdk.progress)
             visible: dataHandler.busy

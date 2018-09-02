@@ -118,6 +118,7 @@ void HKManager::requestData2(bool allData, int daysAgo, HKManager::DataType data
 }
 
 void HKManager::requestData(bool allData, int daysAgo, HKManager::DataType dataType) {
+    NSLog(@"Requesting data...");
   setProgress(0.0);
   m_data.clear();
   NSDate *t0 = [NSDate dateWithTimeIntervalSince1970:0];

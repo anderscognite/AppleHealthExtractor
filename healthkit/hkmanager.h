@@ -33,7 +33,8 @@ class HKManager : public QObject {
     BasalEnergyBurned = 4,
     ActiveEnergyBurned = 5,
     FlightsClimbed = 6,
-    AppleExerciseTime = 7
+    AppleExerciseTime = 7,
+    None = 20
   };
   Q_ENUMS(DataType)
 

@@ -27,17 +27,36 @@ CogniteSDK *DataHandler::sdk() const { return m_sdk; }
 
 HKManager *DataHandler::hkManager() const { return m_hkManager; }
 
-void DataHandler::sync(bool allData, int daysAgo, QString dataType) {
-  m_currentDataType = inverseNameMap[dataType];
-  qDebug() << "Will start syncing with data type " << dataType << " which is "
-           << m_currentDataType << " in the list.";
-  m_hkManager->requestData(allData, daysAgo, m_currentDataType);
-  //  m_hkManager->requestData2(allData, daysAgo, m_currentDataType);
+bool DataHandler::popSyncList() {
+  if (m_syncList.size() == 0) {
+    m_currentDataType = HKManager::None;
+    return false;
+  }
+
+  m_currentDataType = inverseNameMap[m_syncList.back()];
+  m_syncList.pop_back();
+  return true;
+}
+
+void DataHandler::sync(bool allData, int daysAgo, QStringList syncList) {
+  setBusy(true);
+  m_syncList = syncList;
+  m_allData = allData;
+  m_daysAgo = daysAgo;
+  m_currentDataType = inverseNameMap[syncList.front()];
+  m_numSyncs = syncList.size();
+  setSyncProgress(0.0);
+
+  if (popSyncList()) {
+    m_hkManager->requestData(m_allData, m_daysAgo, m_currentDataType);
+  }
 }
 
 bool DataHandler::busy() const { return m_busy; }
 
 QString DataHandler::status() const { return m_status; }
+
+float DataHandler::syncProgress() const { return m_syncProgress; }
 
 void DataHandler::setSdk(CogniteSDK *sdk) {
   if (m_sdk == sdk) return;
@@ -57,6 +76,7 @@ void DataHandler::setHkManager(HKManager *hkManager) {
 }
 
 void DataHandler::setBusy(bool busy) {
+  qDebug() << "Setting data handler busy: " << busy;
   if (m_busy == busy) return;
 
   m_busy = busy;
@@ -70,23 +90,19 @@ void DataHandler::setStatus(QString status) {
   emit statusChanged(m_status);
 }
 
-void DataHandler::printData() {
-  const auto &data = m_hkManager->getData();
-  qDebug() << "Found " << data.size() << " things. Looping: ";
-  //  for (const auto point : data) {
-  //    qDebug() << point.timestamp << ": " << point.value;
-  //  }
+void DataHandler::setSyncProgress(float syncProgress) {
+  m_syncProgress = syncProgress;
+  emit syncProgressChanged(m_syncProgress);
 }
 
 void DataHandler::uploadData() {
-  qDebug() << "Will upload";
   setStatus("Uploading data to CDP...");
-
   uint64_t chunkSize = 100000;
   const auto &data = m_hkManager->getData();
   uint64_t numChunks = data.size() / chunkSize + 1;
 
   qDebug() << "Looping through...";
+  m_uploadsLeft = numChunks;
   for (uint64_t i = 0; i < numChunks; i++) {
     uint64_t start = i * chunkSize;
     uint64_t stop = (i + 1) * chunkSize;
@@ -97,8 +113,7 @@ void DataHandler::uploadData() {
     for (uint64_t j = start; j < stop; j++) {
       points.push_back(data[j]);
     }
-
-    qDebug() << "Start thing";
+    qDebug() << "Starting with start " << start << " and stop " << stop;
     m_sdk->createDataPointsInTimeSeries(
         nameMap[m_currentDataType], points, [this](bool error) {
           qDebug() << "Created data points with error: " << error;
@@ -107,7 +122,18 @@ void DataHandler::uploadData() {
           } else {
             setStatus("Done");
           }
-          setBusy(false);
+          if (--m_uploadsLeft == 0) {
+            int syncsLeft = m_syncList.size();
+            float progress = 1.0 - float(syncsLeft) / m_numSyncs;
+            setSyncProgress(progress);
+
+            if (popSyncList()) {
+              m_hkManager->requestData(m_allData, m_daysAgo, m_currentDataType);
+            } else {
+              setBusy(false);
+            }
+          }
         });
+    qDebug() << "Finished with start " << start << " and stop " << stop;
   }
 }
